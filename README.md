@@ -686,3 +686,176 @@ This project demonstrates hands-on experience across:
 
 The project is intentionally being developed incrementally, starting with a simple working MVP and expanding toward a more capable analytics agent.
 
+
+## Project Architecture
+
+The AI Product Analytics Copilot uses a simple LLM-powered analytics pipeline where the application orchestrates the workflow and the LLM handles natural-language understanding, SQL generation, and business interpretation.
+
+```text
+                         ┌─────────────────────────┐
+                         │        User             │
+                         │                         │
+                         │ "Why did conversion     │
+                         │  rate drop in August?"  │
+                         └────────────┬────────────┘
+                                      │
+                                      ▼
+                         ┌─────────────────────────┐
+                         │     Streamlit UI        │
+                         │                         │
+                         │ • Question input        │
+                         │ • Results display       │
+                         └────────────┬────────────┘
+                                      │
+                                      ▼
+                         ┌─────────────────────────┐
+                         │   Python Orchestrator   │
+                         │       copilot.py        │
+                         │                         │
+                         │ Coordinates the         │
+                         │ analytics workflow      │
+                         └────────────┬────────────┘
+                                      │
+                         ┌────────────┴────────────┐
+                         │                         │
+                         ▼                         ▼
+              ┌───────────────────┐     ┌───────────────────┐
+              │  Schema + Business│     │      OpenAI       │
+              │    Definitions    │────▶│       LLM         │
+              │                   │     │                   │
+              │ • Database schema │     │ Natural language  │
+              │ • KPI definitions │     │ → SQL generation  │
+              └───────────────────┘     └─────────┬─────────┘
+                                                  │
+                                                  ▼
+                                      ┌─────────────────────┐
+                                      │    SQL Execution    │
+                                      │     database.py     │
+                                      └──────────┬──────────┘
+                                                 │
+                                                 ▼
+                                      ┌─────────────────────┐
+                                      │     SQLite DB       │
+                                      │                     │
+                                      │ • users             │
+                                      │ • products          │
+                                      │ • events            │
+                                      │ • orders            │
+                                      └──────────┬──────────┘
+                                                 │
+                                                 ▼
+                                      ┌─────────────────────┐
+                                      │    Query Results    │
+                                      └──────────┬──────────┘
+                                                 │
+                                                 ▼
+                                      ┌─────────────────────┐
+                                      │   Insight Engine    │
+                                      │     analysis.py     │
+                                      │                     │
+                                      │ Results → business  │
+                                      │ explanation         │
+                                      └──────────┬──────────┘
+                                                 │
+                                                 ▼
+                                      ┌─────────────────────┐
+                                      │   Structured JSON   │
+                                      │                     │
+                                      │ • Summary           │
+                                      │ • Key findings      │
+                                      │ • Explanations      │
+                                      │ • Confidence        │
+                                      └──────────┬──────────┘
+                                                 │
+                                                 ▼
+                                      ┌─────────────────────┐
+                                      │    Streamlit UI     │
+                                      │                     │
+                                      │ Business insight +  │
+                                      │ supporting results  │
+                                      └─────────────────────┘
+```
+
+### Architecture Flow
+
+The current MVP follows this workflow:
+
+**1. User Question**
+
+The user submits a natural-language business question through Streamlit.
+
+**2. Context Assembly**
+
+The application provides the LLM with:
+
+* Database schema
+* Table and column definitions
+* Business KPI definitions
+* The user's question
+* SQLite-specific SQL instructions
+
+**3. SQL Generation**
+
+The LLM converts the business question into a SQLite-compatible SQL query.
+
+**4. Database Execution**
+
+The Python application executes the generated SQL against the SQLite analytics database.
+
+**5. Result Analysis**
+
+The query results, SQL, and business definitions are sent to a second LLM step that interprets the results.
+
+**6. Structured Business Insight**
+
+The analysis layer returns structured JSON containing:
+
+* Summary
+* Key findings
+* Possible explanations
+* Confidence level
+
+**7. User-Facing Output**
+
+Streamlit presents the resulting business insight to the user.
+
+### Component Responsibilities
+
+| Component                 | Responsibility                                |
+| ------------------------- | --------------------------------------------- |
+| `app.py`                  | Streamlit user interface                      |
+| `copilot.py`              | Orchestrates the end-to-end workflow          |
+| `prompt.py`               | Builds the SQL-generation prompt              |
+| `schema.py`               | Inspects the database schema                  |
+| `business_definitions.py` | Defines business metrics and terminology      |
+| `llm.py`                  | Handles LLM-based SQL generation              |
+| `database.py`             | Executes SQL against SQLite                   |
+| `analysis.py`             | Converts query results into business insights |
+| `generate_data.py`        | Generates synthetic product analytics data    |
+| `analytics.db`            | Stores the analytics dataset                  |
+
+### Design Principle
+
+The application follows a **deterministic application layer + probabilistic AI layer** architecture.
+
+The Python application controls the workflow, database connection, and execution. The LLM is used for tasks where natural-language understanding and interpretation provide value:
+
+```text
+Business Question
+       ↓
+      LLM
+       ↓
+   SQL Query
+       ↓
+ Python Application
+       ↓
+   SQLite Data
+       ↓
+      LLM
+       ↓
+Business Insight
+```
+
+This separation makes the system easier to extend toward additional analytics capabilities such as KPI calculations, funnel analysis, cohort analysis, automated visualization, follow-up questions, and eventually more autonomous analytics workflows.
+
+
