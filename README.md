@@ -858,4 +858,5 @@ Business Insight
 
 This separation makes the system easier to extend toward additional analytics capabilities such as KPI calculations, funnel analysis, cohort analysis, automated visualization, follow-up questions, and eventually more autonomous analytics workflows.
 
+<img width="2880" height="1494" alt="image" src="https://github.com/user-attachments/assets/d3f17c07-9688-477a-88f9-a9cfbb3f3143" />
 
